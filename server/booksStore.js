@@ -50,3 +50,9 @@ export async function replaceBook(id, data) {
   books = Object.freeze(books.map((b) => (b.id === id ? updated : b)));
   return updated;
 }
+export async function removeBook(id) {
+  await wait(DELAY_MS);
+  const before = books.length;
+  books = Object.freeze(books.filter((b) => b.id !== id)); // NEW array
+  return books.length < before; // true if something was removed
+}

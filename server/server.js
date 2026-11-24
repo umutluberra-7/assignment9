@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { getAllBooks, getBookById, addBook, isDuplicate, replaceBook } from './booksStore.js';
+import { getAllBooks, getBookById, addBook, isDuplicate, replaceBook, removeBook } from './booksStore.js';
 import { parseId, validateBook, pickPatchFields } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
@@ -122,4 +122,16 @@ app.patch('/api/books/:id', async (req, res) => {
 
   const updated = await replaceBook(id, data);
   return res.status(200).json(updated);
+});
+// DELETE /api/books/:id - delete a book
+app.delete('/api/books/:id', async (req, res) => {
+  const idResult = parseId(req.params.id);
+  if (!idResult.ok) {
+    return sendError(res, 400, idResult.error);
+  }
+  const removed = await removeBook(idResult.value);
+  if (!removed) {
+    return sendError(res, 404, `Book with id ${idResult.value} not found`);
+  }
+  return res.status(204).end(); // 204: status only, no body
 });
