@@ -56,10 +56,6 @@ app.post('/api/books', async (req, res) => {
   return res.status(201).json(created);
 });
 
-app.listen(PORT, () => {
-  console.log(`API running on http://localhost:${PORT} (allowed origin: ${CLIENT_ORIGIN})`);
-});
-
 // PUT /api/books/:id - replace a book with a complete body
 app.put('/api/books/:id', async (req, res) => {
   const idResult = parseId(req.params.id);
@@ -134,4 +130,7 @@ app.delete('/api/books/:id', async (req, res) => {
     return sendError(res, 404, `Book with id ${idResult.value} not found`);
   }
   return res.status(204).end(); // 204: status only, no body
+});
+app.listen(PORT, () => {
+  console.log(`API running on http://localhost:${PORT} (allowed origin: ${CLIENT_ORIGIN})`);
 });
