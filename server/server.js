@@ -1,26 +1,28 @@
 import express from 'express';
 import cors from 'cors';
+import { getAllBooks } from './booksStore.js';
 
 const PORT = process.env.PORT ?? 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
 
 const app = express();
 
-// Her isteği terminale yazar
+// write every request to terminal
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Sadece istemcinin tam origin'ine izin ver ('*' DEĞİL)
+// Only allow the full origin of the client. ('*' not)
 app.use(cors({ origin: CLIENT_ORIGIN }));
 
-// JSON body'leri okumak için, ROTALARDAN ÖNCE
+// To read JSON bodies, BEFORE THE ROUTES
 app.use(express.json());
 
-// Geçici test rotası
-app.get('/api/hello', async (req, res) => {
-  res.json({ message: 'Server is working' });
+// GET /api/books - list all books (query options come later)
+app.get('/api/books', async (req, res) => {
+  const books = await getAllBooks();
+  return res.status(200).json(books);
 });
 
 app.listen(PORT, () => {

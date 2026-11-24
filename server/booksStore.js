@@ -1,0 +1,29 @@
+// In-memory data store. Functions are async (simulated slow data source)
+// and the stored array/objects are NEVER modified in place.
+
+const DELAY_MS = 50;
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const seed = [
+  { id: 1, title: 'Dune', author: 'Frank Herbert', year: 1965, genre: 'fiction', read: true, rating: 5 },
+  { id: 2, title: 'The Hobbit', author: 'J.R.R. Tolkien', year: 1937, genre: 'fantasy', read: true, rating: 4 },
+  { id: 3, title: 'A Brief History of Time', author: 'Stephen Hawking', year: 1988, genre: 'science', read: false, rating: null },
+  { id: 4, title: 'Sapiens', author: 'Yuval Noah Harari', year: 2011, genre: 'history', read: true, rating: 4 },
+  { id: 5, title: 'A Game of Thrones', author: 'George R.R. Martin', year: 1996, genre: 'fantasy', read: false, rating: null },
+  { id: 6, title: 'Educated', author: 'Tara Westover', year: 2018, genre: 'non-fiction', read: true, rating: null },
+  { id: 7, title: '1984', author: 'George Orwell', year: 1949, genre: 'fiction', read: false, rating: null },
+];
+
+// Object.freeze: if anyone tries to change these in place, JS throws an error
+let books = Object.freeze(seed.map((b) => Object.freeze({ ...b })));
+let nextId = books.length + 1;
+
+export async function getAllBooks() {
+  await wait(DELAY_MS);
+  return books;
+}
+
+export async function getBookById(id) {
+  await wait(DELAY_MS);
+  return books.find((b) => b.id === id) ?? null;
+}
