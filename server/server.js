@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { getBookById, addBook, isDuplicate, replaceBook, removeBook, queryBooks } from './booksStore.js';
+import { getBookById, addBook, isDuplicate, replaceBook, removeBook, queryBooks, getStats } from './booksStore.js';
 import { parseId, validateBook, pickPatchFields, parseListQuery } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
@@ -137,6 +137,13 @@ app.delete('/api/books/:id', async (req, res) => {
   }
   return res.status(204).end(); // 204: status only, no body
 });
+
+// GET /api/stats - computed from current data on every request
+app.get('/api/stats', async (req, res) => {
+  const stats = await getStats();
+  return res.status(200).json(stats);
+}); 
+
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT} (allowed origin: ${CLIENT_ORIGIN})`);
 });

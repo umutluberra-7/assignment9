@@ -93,3 +93,16 @@ export async function queryBooks({ genre, read, q, sort, order, limit, page }) {
   const start = (page - 1) * limit;
   return { total: sorted.length, items: sorted.slice(start, start + limit) };
 }
+
+// ---------- statistics (computed on every call, never stored) ----------
+export async function getStats() {
+  const all = await getAllBooks();
+  const readCount = all.filter((b) => b.read).length;
+  const rated = all.filter((b) => b.rating !== null);
+  const averageRating =
+    rated.length === 0
+      ? null
+      : Math.round((rated.reduce((sum, b) => sum + b.rating, 0) / rated.length) * 10) / 10;
+  const byGenre = all.reduce((acc, b) => ({ ...acc, [b.genre]: (acc[b.genre] ?? 0) + 1 }), {});
+  return { total: all.length, read: readCount, unread: all.length - readCount, averageRating, byGenre };
+}
