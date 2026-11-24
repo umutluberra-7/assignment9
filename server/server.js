@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { getAllBooks, getBookById, addBook, isDuplicate, replaceBook, removeBook } from './booksStore.js';
-import { parseId, validateBook, pickPatchFields } from './validate.js';
+import { getBookById, addBook, isDuplicate, replaceBook, removeBook, queryBooks } from './booksStore.js';
+import { parseId, validateBook, pickPatchFields, parseListQuery } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
@@ -23,11 +23,17 @@ app.use(cors({ origin: CLIENT_ORIGIN }));
 // To read JSON bodies, BEFORE THE ROUTES
 app.use(express.json());
 
-// GET /api/books - list all books (query options come later)
+// GET /api/books - list with query options
 app.get('/api/books', async (req, res) => {
-  const books = await getAllBooks();
-  return res.status(200).json(books);
+  const parsed = parseListQuery(req.query);
+  if (!parsed.ok) {
+    return sendError(res, 400, parsed.error);
+  }
+  const { total, items } = await queryBooks(parsed.value);
+  res.set('X-Total-Count', String(total)); // total matches before pagination
+  return res.status(200).json(items);
 });
+
 // GET /api/books/:id - one book
 app.get('/api/books/:id', async (req, res) => {
   const idResult = parseId(req.params.id);

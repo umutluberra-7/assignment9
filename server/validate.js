@@ -88,3 +88,76 @@ export function pickPatchFields(body) {
   }
   return pass(changes);
 }
+// ---------- query string for GET /api/books ----------
+export const SORT_FIELDS = ['title', 'author', 'year', 'rating'];
+const KNOWN_QUERY = ['genre', 'read', 'q', 'sort', 'order', 'limit', 'page'];
+
+function parseIntInRange(name, raw, min, max) {
+  if (!/^\d+$/.test(raw)) return { error: `${name} must be an integer` };
+  const n = Number(raw);
+  if (n < min || (max !== undefined && n > max)) {
+    return {
+      error: max === undefined
+        ? `${name} must be at least ${min}`
+        : `${name} must be between ${min} and ${max}`,
+    };
+  }
+  return { value: n };
+}
+
+export function parseListQuery(query) {
+  // A repeated parameter (?genre=a&genre=b) arrives as an ARRAY: reject it
+  for (const key of KNOWN_QUERY) {
+    if (Array.isArray(query[key])) {
+      return fail(`Query parameter "${key}" must not be repeated`);
+    }
+  }
+
+  const options = { genre: null, read: null, q: '', sort: 'id', order: 'asc', limit: 50, page: 1 };
+
+  if (query.genre !== undefined) {
+    if (!GENRES.includes(query.genre)) {
+      return fail(`genre must be one of: ${GENRES.join(', ')}`);
+    }
+    options.genre = query.genre;
+  }
+
+  if (query.read !== undefined) {
+    if (query.read !== 'true' && query.read !== 'false') {
+      return fail('read must be "true" or "false"');
+    }
+    options.read = query.read === 'true';
+  }
+
+  if (query.q !== undefined) {
+    options.q = query.q.trim().toLowerCase();
+  }
+
+  if (query.sort !== undefined) {
+    if (!SORT_FIELDS.includes(query.sort)) {
+      return fail(`sort must be one of: ${SORT_FIELDS.join(', ')}`);
+    }
+    options.sort = query.sort;
+  }
+
+  if (query.order !== undefined) {
+    if (query.order !== 'asc' && query.order !== 'desc') {
+      return fail('order must be "asc" or "desc"');
+    }
+    options.order = query.order;
+  }
+
+  if (query.limit !== undefined) {
+    const { value, error } = parseIntInRange('limit', query.limit, 1, 50);
+    if (error) return fail(error);
+    options.limit = value;
+  }
+
+  if (query.page !== undefined) {
+    const { value, error } = parseIntInRange('page', query.page, 1);
+    if (error) return fail(error);
+    options.page = value;
+  }
+
+  return pass(options);
+}

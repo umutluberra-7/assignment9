@@ -56,3 +56,40 @@ export async function removeBook(id) {
   books = Object.freeze(books.filter((b) => b.id !== id)); // NEW array
   return books.length < before; // true if something was removed
 }
+
+// ---------- list with filter / sort / pagination ----------
+const textCompare = (a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' });
+
+function compareBooks(field, order) {
+  const dir = order === 'desc' ? -1 : 1;
+  return (a, b) => {
+    if (field === 'rating') {
+      // Unrated books ALWAYS go last, whatever the order
+      if (a.rating === null && b.rating === null) return a.id - b.id;
+      if (a.rating === null) return 1;
+      if (b.rating === null) return -1;
+      return (a.rating - b.rating) * dir || a.id - b.id;
+    }
+    const result = field === 'title' || field === 'author'
+      ? textCompare(a[field], b[field])   // alphabetical, ignores case
+      : a[field] - b[field];              // id or year (numbers)
+    return result * dir || a.id - b.id;  // ties broken by id
+  };
+}
+
+export async function queryBooks({ genre, read, q, sort, order, limit, page }) {
+  const all = await getAllBooks();
+
+  const filtered = all.filter(
+    (b) =>
+      (genre === null || b.genre === genre) &&
+      (read === null || b.read === read) &&
+      (q === '' || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q)),
+  );
+
+  // toSorted returns a NEW array: the stored one is never reordered
+  const sorted = filtered.toSorted(compareBooks(sort, order));
+
+  const start = (page - 1) * limit;
+  return { total: sorted.length, items: sorted.slice(start, start + limit) };
+}
