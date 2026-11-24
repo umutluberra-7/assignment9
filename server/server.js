@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { getAllBooks, getBookById, addBook, isDuplicate } from './booksStore.js';
+import { getAllBooks, getBookById, addBook, isDuplicate, replaceBook } from './booksStore.js';
 import { parseId, validateBook } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
@@ -58,4 +58,32 @@ app.post('/api/books', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT} (allowed origin: ${CLIENT_ORIGIN})`);
+});
+
+// PUT /api/books/:id - replace a book with a complete body
+app.put('/api/books/:id', async (req, res) => {
+  const idResult = parseId(req.params.id);
+  if (!idResult.ok) {
+    return sendError(res, 400, idResult.error);
+  }
+  const id = idResult.value;
+
+  const existing = await getBookById(id);
+  if (!existing) {
+    return sendError(res, 404, `Book with id ${id} not found`);
+  }
+
+  const result = validateBook(req.body);
+  if (!result.ok) {
+    return sendError(res, 400, result.error);
+  }
+  const data = result.value;
+
+  // excludeId = id: the book may keep its own title/author
+  if (await isDuplicate(data.title, data.author, id)) {
+    return sendError(res, 409, `A book titled "${data.title}" by ${data.author} already exists`);
+  }
+
+  const updated = await replaceBook(id, data);
+  return res.status(200).json(updated);
 });

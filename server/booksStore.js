@@ -43,3 +43,10 @@ export async function addBook(data) {
   books = Object.freeze([...books, book]); // NEW array, old one untouched
   return book;
 }
+export async function replaceBook(id, data) {
+  await wait(DELAY_MS);
+  const updated = Object.freeze({ id, ...data });
+  // NEW array: the matching book is swapped for a NEW object
+  books = Object.freeze(books.map((b) => (b.id === id ? updated : b)));
+  return updated;
+}
