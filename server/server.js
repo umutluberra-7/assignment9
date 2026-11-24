@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
-import { getAllBooks, getBookById } from './booksStore.js';
-import { parseId } from './validate.js';
+import { getAllBooks, getBookById, addBook } from './booksStore.js';
+import { parseId, validateBook } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
@@ -39,6 +39,17 @@ app.get('/api/books/:id', async (req, res) => {
     return sendError(res, 404, `Book with id ${idResult.value} not found`);
   }
   return res.status(200).json(book);
+});
+
+// POST /api/books - create a book
+app.post('/api/books', async (req, res) => {
+  const result = validateBook(req.body);
+  if (!result.ok) {
+    return sendError(res, 400, result.error);
+  }
+  const created = await addBook(result.value);
+  res.location(`/api/books/${created.id}`);
+  return res.status(201).json(created);
 });
 
 app.listen(PORT, () => {

@@ -27,3 +27,10 @@ export async function getBookById(id) {
   await wait(DELAY_MS);
   return books.find((b) => b.id === id) ?? null;
 }
+export async function addBook(data) {
+  await wait(DELAY_MS);
+  const book = Object.freeze({ id: nextId, ...data });
+  nextId += 1;
+  books = Object.freeze([...books, book]); // NEW array, old one untouched
+  return book;
+}
