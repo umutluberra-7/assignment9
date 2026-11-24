@@ -1,0 +1,305 @@
+### 200 - list with two query parameters
+```
+$ curl --include http://localhost:3000/api/books?genre=fantasy&sort=year&order=desc
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+X-Total-Count: 2
+Content-Type: application/json; charset=utf-8
+Content-Length: 234
+ETag: W/"ea-bP8U79kbv5lv63kGBr1rOCieHBM"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+[{"id":5,"title":"A Game of Thrones","author":"George R.R. Martin","year":1996,"genre":"fantasy","read":false,"rating":null},{"id":2,"title":"The Hobbit","author":"J.R.R. Tolkien","year":1937,"genre":"fantasy","read":true,"rating":4}]
+```
+
+### 200 - one book
+```
+$ curl --include http://localhost:3000/api/books/2
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 108
+ETag: W/"6c-Njgao7QYoRqPB4F+UzLFWSwohrQ"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":2,"title":"The Hobbit","author":"J.R.R. Tolkien","year":1937,"genre":"fantasy","read":true,"rating":4}
+```
+
+### Stats BEFORE a change
+```
+$ curl --include http://localhost:3000/api/stats
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 127
+ETag: W/"7f-8zWTdf5feT9Y/2LkocGHEo6qpHA"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"total":7,"read":4,"unread":3,"averageRating":4.3,"byGenre":{"fiction":2,"fantasy":2,"science":1,"history":1,"non-fiction":1}}
+```
+
+### 201 - create (Location header; body id ignored)
+```
+$ curl --include -X POST http://localhost:3000/api/books -H Content-Type: application/json -d {"id":999,"title":"Neuromancer","author":"William Gibson","year":1984,"genre":"fiction"}
+HTTP/1.1 201 Created
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Location: /api/books/8
+Content-Type: application/json; charset=utf-8
+Content-Length: 113
+ETag: W/"71-9NhG42qoSiEnBWeB0BGxRI6qv4U"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":8,"title":"Neuromancer","author":"William Gibson","year":1984,"genre":"fiction","read":false,"rating":null}
+```
+
+### Stats AFTER the change
+```
+$ curl --include http://localhost:3000/api/stats
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 127
+ETag: W/"7f-drajYDwCoAywPGm55LsgsMwWtKQ"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"total":8,"read":4,"unread":4,"averageRating":4.3,"byGenre":{"fiction":3,"fantasy":2,"science":1,"history":1,"non-fiction":1}}
+```
+
+### 400 - invalid body (year)
+```
+$ curl --include -X POST http://localhost:3000/api/books -H Content-Type: application/json -d {"title":"Future","author":"Someone","year":3000,"genre":"fiction"}
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 57
+ETag: W/"39-2hxkQVGUygT77eAZY8u2BQSh9Ts"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"year must be an integer between 1000 and 2026"}
+```
+
+### 400 - malformed JSON
+```
+$ curl --include -X POST http://localhost:3000/api/books -H Content-Type: application/json -d {"title": 
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 72
+ETag: W/"48-VI1VUyFFXgQMMn+TIZ5fc4w82qk"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Malformed JSON in request body: Unexpected end of JSON input"}
+```
+
+### 400 - repeated query parameter
+```
+$ curl --include http://localhost:3000/api/books?genre=fiction&genre=history
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 58
+ETag: W/"3a-6mT0mDMdSpAfOdjXJoHaV9ooo4w"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Query parameter \"genre\" must not be repeated"}
+```
+
+### 400 - invalid id
+```
+$ curl --include http://localhost:3000/api/books/abc
+HTTP/1.1 400 Bad Request
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 59
+ETag: W/"3b-JJZZfay099yRX7VYq+HV9gvhf1M"
+Date: Tue, 24 Nov 2026 20:16:41 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"id must be a positive integer, received \"abc\""}
+```
+
+### 404 - missing book
+```
+$ curl --include http://localhost:3000/api/books/9999
+HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 39
+ETag: W/"27-qMkemj7HT6DzWGHQqTCbCd5l7Fs"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Book with id 9999 not found"}
+```
+
+### 409 - duplicate
+```
+$ curl --include -X POST http://localhost:3000/api/books -H Content-Type: application/json -d {"title":"dune","author":"FRANK HERBERT","year":1965,"genre":"fiction"}
+HTTP/1.1 409 Conflict
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 66
+ETag: W/"42-CtlzQchPM6HgIAjlvAg18KUhoBA"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"A book titled \"dune\" by FRANK HERBERT already exists"}
+```
+
+### PATCH book 8 - only sent fields change, unknown field ignored
+```
+$ curl --include -X PATCH http://localhost:3000/api/books/8 -H Content-Type: application/json -d {"read":true,"rating":5,"color":"blue"}
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 109
+ETag: W/"6d-zr8F2Qwd7mbkjZXi2s38A06xBdc"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":8,"title":"Neuromancer","author":"William Gibson","year":1984,"genre":"fiction","read":true,"rating":5}
+```
+
+### PUT book 8 - complete body, read/rating reset to defaults
+```
+$ curl --include -X PUT http://localhost:3000/api/books/8 -H Content-Type: application/json -d {"title":"Neuromancer","author":"William Gibson","year":1984,"genre":"science"}
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 113
+ETag: W/"71-w5jgcbf31srhnxo5TIoiUD2zVLs"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"id":8,"title":"Neuromancer","author":"William Gibson","year":1984,"genre":"science","read":false,"rating":null}
+```
+
+### 204 - delete
+```
+$ curl --include -X DELETE http://localhost:3000/api/books/8
+HTTP/1.1 204 No Content
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+```
+
+### 404 - same delete repeated
+```
+$ curl --include -X DELETE http://localhost:3000/api/books/8
+HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 36
+ETag: W/"24-h0UF16CcN9f8dKhBtZhZzRBAmEA"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Book with id 8 not found"}
+```
+
+### 404 - unknown /api route
+```
+$ curl --include http://localhost:3000/api/authors
+HTTP/1.1 404 Not Found
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 21
+ETag: W/"15-bm7tJgu8FHlq5QU+Y6gDxOGPfRc"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Not found"}
+```
+
+### 500 - deliberate crash
+```
+$ curl --include http://localhost:3000/api/crash
+HTTP/1.1 500 Internal Server Error
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin
+Content-Type: application/json; charset=utf-8
+Content-Length: 32
+ETag: W/"20-cI8B1wZuBEyTE5ClDvphKZx7wd0"
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"error":"Something went wrong"}
+```
+
+### OPTIONS preflight imitation
+```
+$ curl --include -X OPTIONS http://localhost:3000/api/books/1 -H Origin: http://localhost:5173 -H Access-Control-Request-Method: PATCH -H Access-Control-Request-Headers: content-type
+HTTP/1.1 204 No Content
+X-Powered-By: Express
+Access-Control-Allow-Origin: http://localhost:5173
+Vary: Origin, Access-Control-Request-Headers
+Access-Control-Allow-Methods: GET,HEAD,PUT,PATCH,POST,DELETE
+Access-Control-Allow-Headers: content-type
+Content-Length: 0
+Date: Tue, 24 Nov 2026 20:16:42 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+
+```
+
