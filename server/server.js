@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { getAllBooks, getBookById, addBook } from './booksStore.js';
+import { getAllBooks, getBookById, addBook, isDuplicate } from './booksStore.js';
 import { parseId, validateBook } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
@@ -47,7 +47,11 @@ app.post('/api/books', async (req, res) => {
   if (!result.ok) {
     return sendError(res, 400, result.error);
   }
-  const created = await addBook(result.value);
+  const data = result.value;
+  if (await isDuplicate(data.title, data.author)) {
+    return sendError(res, 409, `A book titled "${data.title}" by ${data.author} already exists`);
+  }
+  const created = await addBook(data);
   res.location(`/api/books/${created.id}`);
   return res.status(201).json(created);
 });

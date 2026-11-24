@@ -27,6 +27,15 @@ export async function getBookById(id) {
   await wait(DELAY_MS);
   return books.find((b) => b.id === id) ?? null;
 }
+// True when ANOTHER book (not excludeId) has the same title and author, ignoring case
+export async function isDuplicate(title, author, excludeId = null) {
+  await wait(DELAY_MS);
+  const t = title.trim().toLowerCase();
+  const a = author.trim().toLowerCase();
+  return books.some(
+    (b) => b.id !== excludeId && b.title.toLowerCase() === t && b.author.toLowerCase() === a,
+  );
+}
 export async function addBook(data) {
   await wait(DELAY_MS);
   const book = Object.freeze({ id: nextId, ...data });
