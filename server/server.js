@@ -143,7 +143,31 @@ app.get('/api/stats', async (req, res) => {
   const stats = await getStats();
   return res.status(200).json(stats);
 }); 
+// Demonstration route: throws inside an async handler.
+// Express 5 forwards the rejected promise to the error middleware -> 500.
+// Kept on purpose and documented in the README.
+app.get('/api/crash', async (req, res) => {
+  throw new Error('Deliberate crash to test the error-handling middleware');
+});
 
+// 404 fallback for anything else under /api (no Express 4 '*' wildcard)
+app.use('/api', (req, res) => {
+  sendError(res, 404, 'Not found');
+});
+
+// Error-handling middleware: 4 parameters, registered AFTER all routes
+app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    console.error(err);
+    return next(err);
+  }
+  // Malformed JSON from express.json()
+  if (err.type === 'entity.parse.failed') {
+    return sendError(res, 400, `Malformed JSON in request body: ${err.message}`);
+  }
+  console.error(err);
+  return sendError(res, 500, 'Something went wrong');
+});
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT} (allowed origin: ${CLIENT_ORIGIN})`);
 });
