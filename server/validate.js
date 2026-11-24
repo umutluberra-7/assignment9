@@ -73,3 +73,18 @@ export function validateBook(body) {
   // Return a NEW clean object with only the allowed fields
   return pass({ title: title.trim(), author: author.trim(), year, genre, read, rating });
 }
+
+// For PATCH: keep only the known fields that were actually sent
+export function pickPatchFields(body) {
+  if (!isPlainObject(body)) {
+    return fail('Request body must be a JSON object');
+  }
+  const allowed = ['title', 'author', 'year', 'genre', 'read', 'rating'];
+  const changes = Object.fromEntries(
+    Object.entries(body).filter(([key]) => allowed.includes(key)),
+  );
+  if (Object.keys(changes).length === 0) {
+    return fail(`PATCH body must contain at least one of: ${allowed.join(', ')}`);
+  }
+  return pass(changes);
+}

@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { getAllBooks, getBookById, addBook, isDuplicate, replaceBook } from './booksStore.js';
-import { parseId, validateBook } from './validate.js';
+import { parseId, validateBook, pickPatchFields } from './validate.js';
 
 const PORT = process.env.PORT ?? 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173';
@@ -80,6 +80,42 @@ app.put('/api/books/:id', async (req, res) => {
   const data = result.value;
 
   // excludeId = id: the book may keep its own title/author
+  if (await isDuplicate(data.title, data.author, id)) {
+    return sendError(res, 409, `A book titled "${data.title}" by ${data.author} already exists`);
+  }
+
+  const updated = await replaceBook(id, data);
+  return res.status(200).json(updated);
+});
+// PATCH /api/books/:id - change only the fields sent
+app.patch('/api/books/:id', async (req, res) => {
+  const idResult = parseId(req.params.id);
+  if (!idResult.ok) {
+    return sendError(res, 400, idResult.error);
+  }
+  const id = idResult.value;
+
+  const existing = await getBookById(id);
+  if (!existing) {
+    return sendError(res, 404, `Book with id ${id} not found`);
+  }
+
+  const picked = pickPatchFields(req.body);
+  if (!picked.ok) {
+    return sendError(res, 400, picked.error);
+  }
+
+  // Merge: existing values + changes (new object, existing book untouched)
+  const { id: _ignored, ...existingFields } = existing;
+  const merged = { ...existingFields, ...picked.value };
+
+  // The merged book must pass the same validation as a complete book
+  const result = validateBook(merged);
+  if (!result.ok) {
+    return sendError(res, 400, result.error);
+  }
+  const data = result.value;
+
   if (await isDuplicate(data.title, data.author, id)) {
     return sendError(res, 409, `A book titled "${data.title}" by ${data.author} already exists`);
   }
